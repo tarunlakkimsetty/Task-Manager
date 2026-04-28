@@ -21,3 +21,20 @@ A production-ready mini SaaS task management application with secure JWT authent
 
 ## Author
 Sai Tarun Lakkimsetty
+
+## Screenshots
+
+### Dashboard
+![Dashboard](./screenshots/dashboard.png)
+
+### Create Task
+![Create Task](./screenshots/create-task.png)
+
+### Delete Task
+![Delete Task](./screenshots/delete-task.png)
+
+### Sign In
+![Sign In](./screenshots/signin.png)
+
+### Create Account
+![Create Account](./screenshots/create-account.png)
