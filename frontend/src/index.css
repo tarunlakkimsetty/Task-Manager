@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply transition-colors duration-200;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gradient-to-br from-slate-50 via-white to-slate-100 font-sans text-slate-900;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
+}
+
+/* Input focus effect */
+input:focus,
+textarea:focus {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-0;
+}
+
+/* Button base styles */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+}
+
+.btn-primary {
+  @apply btn bg-primary-600 text-white hover:bg-primary-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply btn bg-slate-200 text-slate-900 hover:bg-slate-300 active:scale-95;
+}
+
+.btn-danger {
+  @apply btn bg-red-500 text-white hover:bg-red-600 active:scale-95;
+}
+
+/* Card base styles */
+.card {
+  @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100;
+}
+
+/* Badge styles */
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.badge-pending {
+  @apply badge bg-yellow-100 text-yellow-800;
+}
+
+.badge-completed {
+  @apply badge bg-green-100 text-green-800;
+}
+
+/* Shimmer loading effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
