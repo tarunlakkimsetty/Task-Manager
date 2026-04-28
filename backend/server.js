@@ -1,20 +1,21 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const app = require("./app");
 const sequelize = require("./config/db");
 
-// Load model associations
-require("./models/associations");
-
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync()
+sequelize
+  .authenticate()
   .then(() => {
-    console.log("Database connected ✅");
+    console.log("DB Connected ✅");
+    return sequelize.sync();
+  })
+  .then(() => {
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT} 🚀`);
     });
   })
-  .catch(err => {
-    console.error("DB Error:", err);
+  .catch((err) => {
+    console.error("Error starting server ❌", err);
   });
