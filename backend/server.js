@@ -42,6 +42,12 @@ async function connectDatabase() {
         }),
       ]);
       console.log("✅ Database connected successfully");
+      
+      // Sync models to create tables
+      console.log("📊 Syncing database models...");
+      await sequelize.sync({ alter: true });
+      console.log("✅ Database models synced");
+      
       return true;
     } catch (error) {
       retries++;
