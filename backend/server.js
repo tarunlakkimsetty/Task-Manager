@@ -27,11 +27,10 @@ console.log(`
 └─────────────────────────────────────────────┘
 `);
 
-// Retry logic for database connection
+// Retry logic for database connection (attempt once, then give up gracefully)
 async function connectDatabase() {
-  const maxRetries = 10;  // Reduce retries
+  const maxRetries = 3;  // Quick fail
   let retries = 0;
-  const connectionTimeoutMs = 5000;  // 5 seconds per attempt (fail fast)
 
   while (retries < maxRetries) {
     try {
@@ -39,17 +38,10 @@ async function connectDatabase() {
       await Promise.race([
         sequelize.authenticate(),
         new Promise((_, reject) => {
-          setTimeout(() => reject(new Error(`Database connection timeout (${connectionTimeoutMs/1000}s)`)), connectionTimeoutMs);
+          setTimeout(() => reject(new Error("Connection timeout (3s)")), 3000);
         }),
       ]);
       console.log("✅ Database connected successfully");
-
-      if (NODE_ENV !== "production") {
-        console.log("📊 Syncing database models...");
-        await sequelize.sync({ alter: false });
-        console.log("✅ Database models synchronized");
-      }
-
       return true;
     } catch (error) {
       retries++;
@@ -57,14 +49,12 @@ async function connectDatabase() {
       console.log(`   ⚠️  Connection failed: ${reason}`);
       
       if (retries < maxRetries) {
-        console.log(`   Waiting 2 seconds before retry...`);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } else {
-        console.error("❌ Failed to connect to database after " + maxRetries + " attempts");
-        return false;
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
   }
+  console.log("⚠️  Database unavailable - API will run in read-only mode");
+  return false;
 }
 
 // Start server
