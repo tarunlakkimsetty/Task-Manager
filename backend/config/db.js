@@ -8,15 +8,17 @@ if (process.env.NODE_ENV !== "production") {
 // Debug: Log DATABASE_URL setup (mask the password)
 // Prefer DATABASE_PUBLIC_URL from Postgres service, fallback to DATABASE_URL
 const dbUrl = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
+const isPublicEndpoint = !!process.env.DATABASE_PUBLIC_URL;
 if (dbUrl) {
   const maskedUrl = dbUrl.replace(/:[^:@]*@/, ":****@");
   console.log("📡 Database URL configured:", maskedUrl);
-  if (process.env.DATABASE_PUBLIC_URL) {
+  if (isPublicEndpoint) {
     console.log("   Using PUBLIC endpoint (switchback.proxy.rlwy.net)");
   }
 }
 
-const useSSL = process.env.DB_SSL === "true" || process.env.NODE_ENV === "production";
+// For public endpoints on Railway, use SSL with proper settings
+const useSSL = process.env.NODE_ENV === "production";
 
 // Validate DATABASE_URL
 if (!dbUrl) {
@@ -41,11 +43,13 @@ const sequelize = new Sequelize(dbUrl, {
       }
     : {},
   pool: {
-    max: 3,
+    max: 2,
     min: 0,
-    acquire: 10000,
-    idle: 30000,
+    acquire: 5000,
+    idle: 10000,
   },
+  connectTimeoutMillis: 15000,
+  idleTimeoutMillis: 30000,
 });
 
 module.exports = sequelize;
