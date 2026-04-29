@@ -29,9 +29,9 @@ console.log(`
 
 // Retry logic for database connection
 async function connectDatabase() {
-  const maxRetries = 20;
+  const maxRetries = 10;  // Reduce retries
   let retries = 0;
-  const connectionTimeoutMs = 30000; // 30 seconds per attempt
+  const connectionTimeoutMs = 5000;  // 5 seconds per attempt (fail fast)
 
   while (retries < maxRetries) {
     try {
@@ -57,8 +57,8 @@ async function connectDatabase() {
       console.log(`   ⚠️  Connection failed: ${reason}`);
       
       if (retries < maxRetries) {
-        console.log(`   Waiting 5 seconds before retry...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        console.log(`   Waiting 2 seconds before retry...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
       } else {
         console.error("❌ Failed to connect to database after " + maxRetries + " attempts");
         return false;
