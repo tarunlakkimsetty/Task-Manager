@@ -23,24 +23,25 @@ app.use(
 );
 app.use(express.json());
 
-// Mark database readiness in app locals so requests fail fast until Sequelize is connected.
+// Mark database readiness in app locals
 app.locals.dbReady = false;
 
-app.use((req, res, next) => {
-  if (req.path === "/" || req.path === "/health") {
-    return next();
-  }
-
-  if (!app.locals.dbReady) {
-    return res.status(503).json({
-      success: false,
-      message: "Service temporarily unavailable",
-      error: "Database is still connecting. Please retry in a moment.",
-    });
-  }
-
-  next();
-});
+// Temporarily disabled - allow API to respond even without database
+// app.use((req, res, next) => {
+//   if (req.path === "/" || req.path === "/health") {
+//     return next();
+//   }
+//
+//   if (!app.locals.dbReady) {
+//     return res.status(503).json({
+//       success: false,
+//       message: "Service temporarily unavailable",
+//       error: "Database is still connecting. Please retry in a moment.",
+//     });
+//   }
+//
+//   next();
+// });
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
