@@ -31,6 +31,7 @@ console.log(`
 async function connectDatabase() {
   const maxRetries = 20;
   let retries = 0;
+  const connectionTimeoutMs = 30000; // 30 seconds per attempt
 
   while (retries < maxRetries) {
     try {
@@ -38,7 +39,7 @@ async function connectDatabase() {
       await Promise.race([
         sequelize.authenticate(),
         new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Database connection timeout (10s)")), 10000);
+          setTimeout(() => reject(new Error(`Database connection timeout (${connectionTimeoutMs/1000}s)`)), connectionTimeoutMs);
         }),
       ]);
       console.log("✅ Database connected successfully");
