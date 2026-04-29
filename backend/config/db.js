@@ -6,15 +6,20 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Debug: Log DATABASE_URL setup (mask the password)
-// Use internal endpoint (more reliable for Railway services)
+// Check which endpoint we're using
 const dbUrl = process.env.DATABASE_URL;
+const isPublicEndpoint = dbUrl && dbUrl.includes("switchback.proxy.rlwy.net");
+const isInternalEndpoint = dbUrl && dbUrl.includes("postgres.railway.internal");
+
 if (dbUrl) {
   const maskedUrl = dbUrl.replace(/:[^:@]*@/, ":****@");
   console.log("📡 Database URL configured:", maskedUrl);
+  if (isPublicEndpoint) console.log("   (public endpoint)");
+  if (isInternalEndpoint) console.log("   (internal endpoint)");
 }
 
-// Enable SSL in production
-const useSSL = process.env.NODE_ENV === "production";
+// SSL: Only use for internal endpoint; public proxy handles SSL
+const useSSL = isInternalEndpoint && process.env.NODE_ENV === "production";
 
 // Validate DATABASE_URL
 if (!dbUrl) {
