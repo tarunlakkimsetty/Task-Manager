@@ -35,7 +35,12 @@ async function connectDatabase() {
   while (retries < maxRetries) {
     try {
       console.log(`🔗 Attempting database connection (attempt ${retries + 1}/${maxRetries})...`);
-      await sequelize.authenticate();
+      await Promise.race([
+        sequelize.authenticate(),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Database connection timeout (10s)")), 10000);
+        }),
+      ]);
       console.log("✅ Database connected successfully");
 
       if (NODE_ENV !== "production") {
@@ -79,6 +84,7 @@ const startServer = async () => {
 
     // Initialize DB connection in the background.
     connectDatabase().then((ok) => {
+      app.locals.dbReady = ok;
       if (!ok) {
         console.error("❌ API is up, but database is still unavailable.");
       }

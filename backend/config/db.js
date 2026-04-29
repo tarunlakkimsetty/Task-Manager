@@ -6,14 +6,17 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Debug: Log DATABASE_URL setup (mask the password)
-const dbUrl = process.env.DATABASE_URL;
+// Prefer DATABASE_PUBLIC_URL from Postgres service, fallback to DATABASE_URL
+const dbUrl = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
 if (dbUrl) {
   const maskedUrl = dbUrl.replace(/:[^:@]*@/, ":****@");
   console.log("📡 Database URL configured:", maskedUrl);
+  if (process.env.DATABASE_PUBLIC_URL) {
+    console.log("   Using PUBLIC endpoint (switchback.proxy.rlwy.net)");
+  }
 }
 
-const isRailwayInternal = /railway\.internal/i.test(dbUrl || "");
-const useSSL = process.env.DB_SSL === "true" || (process.env.NODE_ENV === "production" && !isRailwayInternal);
+const useSSL = process.env.DB_SSL === "true" || process.env.NODE_ENV === "production";
 
 // Validate DATABASE_URL
 if (!dbUrl) {
@@ -40,7 +43,7 @@ const sequelize = new Sequelize(dbUrl, {
   pool: {
     max: 3,
     min: 0,
-    acquire: 90000,
+    acquire: 10000,
     idle: 30000,
   },
 });
