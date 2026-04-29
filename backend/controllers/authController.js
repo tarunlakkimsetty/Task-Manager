@@ -12,33 +12,58 @@ const { AppError } = require("../middleware/errorHandler");
  * @returns {object} - Success message
  */
 exports.signup = async (req, res, next) => {
-  const { username, email, password } = req.body;
+  try {
+    const { username, email, password } = req.body;
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    throw new AppError("Email already registered", 400);
+    // Check if user already exists with timeout
+    let existingUser;
+    try {
+      existingUser = await Promise.race([
+        User.findOne({ where: { email } }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Database query timeout")), 5000)
+        ),
+      ]);
+    } catch (dbError) {
+      throw new AppError("Database service unavailable. Please try again later.", 503);
+    }
+
+    if (existingUser) {
+      throw new AppError("Email already registered", 400);
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user with timeout
+    let user;
+    try {
+      user = await Promise.race([
+        User.create({
+          username,
+          email,
+          password: hashedPassword,
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Database query timeout")), 5000)
+        ),
+      ]);
+    } catch (dbError) {
+      throw new AppError("Database service unavailable. Please try again later.", 503);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Create user
-  const user = await User.create({
-    username,
-    email,
-    password: hashedPassword,
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "User created successfully",
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-    },
-  });
 };
 
 /**
@@ -49,37 +74,52 @@ exports.signup = async (req, res, next) => {
  * @returns {object} - JWT token and user data
  */
 exports.login = async (req, res, next) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  // Find user
-  const user = await User.findOne({ where: { email } });
-  if (!user) {
-    throw new AppError("User not found", 404);
+    // Find user with timeout
+    let user;
+    try {
+      user = await Promise.race([
+        User.findOne({ where: { email } }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Database query timeout")), 5000)
+        ),
+      ]);
+    } catch (dbError) {
+      throw new AppError("Database service unavailable. Please try again later.", 503);
+    }
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new AppError("Invalid password", 401);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-
-  // Compare password
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new AppError("Invalid password", 401);
-  }
-
-  // Generate JWT token
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  res.status(200).json({
-    success: true,
-    message: "Login successful",
-    token,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-    },
-  });
 };
 
 /**
@@ -88,17 +128,31 @@ exports.login = async (req, res, next) => {
  * @returns {object} - Current user data
  */
 exports.getCurrentUser = async (req, res, next) => {
-  const user = await User.findByPk(req.user.id, {
-    attributes: { exclude: ["password"] },
-  });
+  try {
+    let user;
+    try {
+      user = await Promise.race([
+        User.findByPk(req.user.id, {
+          attributes: { exclude: ["password"] },
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Database query timeout")), 5000)
+        ),
+      ]);
+    } catch (dbError) {
+      throw new AppError("Database service unavailable. Please try again later.", 503);
+    }
 
-  if (!user) {
-    throw new AppError("User not found", 404);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User retrieved successfully",
+      user,
+    });
+  } catch (error) {
+    next(error);
   }
-
-  res.status(200).json({
-    success: true,
-    message: "User retrieved successfully",
-    user,
-  });
 };
